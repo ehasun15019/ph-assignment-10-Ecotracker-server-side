@@ -25,6 +25,31 @@ async function run() {
   try {
     await client.connect();
 
+    /* collections */
+    const dataBase = client.db("ecoTracker");
+    const usersCollection = dataBase.collection("users");
+
+    /* users all api start */
+    app.post('/users', async(req, res) => {
+      const newUser = req.body;
+
+      const email = req.body.email;
+      const query = {
+        email: email
+      }
+
+      const existingUser = await usersCollection.findOne(query);
+
+      if(existingUser) {
+        res.send({
+          message: 'user already exits'
+        })
+      } else {
+        const result = await usersCollection.insertOne(newUser);
+        res.send(result);
+      }
+    })
+    /* users all api emd */
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
@@ -33,7 +58,7 @@ async function run() {
     );
   } 
   finally {
-
+    
   }
 }
 run().catch(console.dir);
