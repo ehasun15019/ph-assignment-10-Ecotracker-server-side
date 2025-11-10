@@ -5,7 +5,7 @@ require("dotenv").config();
 const cors = require("cors");
 
 // mongodb require
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@qdhi4wp.mongodb.net/?appName=ic-cluster`;
 
 // middleware
@@ -28,25 +28,36 @@ async function run() {
     /* collections */
     const dataBase = client.db("ecoTracker");
     const usersCollection = dataBase.collection("users");
-    const challengesCollection = dataBase.collection("challenges")
-
+    const challengesCollection = dataBase.collection("challenges");
 
     /* challenges app api start */
     // get method for showing all data for frontend
-    app.get("/challenges", async(req, res) => {
+    app.get("/challenges", async (req, res) => {
       const cursor = challengesCollection.find();
       const result = await cursor.toArray();
-      res.send(result)
-    })
+      res.send(result);
+    });
 
-    // get method for showing 6 data 
-    app.get("/challenges-six", async(req, res) => {
-      const cursor = challengesCollection.find().sort({ category: -1 }).limit(6);
+    // get method for showing 6 data
+    app.get("/challenges-six", async (req, res) => {
+      const cursor = challengesCollection
+        .find()
+        .sort({ participants: -1 })
+        .limit(6);
       const result = await cursor.toArray();
       res.send(result);
-    })
-    /* challenges app api end */
+    });
 
+    // get method for details
+    app.get("/challenges/:id", async (req, res) => {
+      const challengeId = req.params.id;
+      const query = {
+        _id: new ObjectId(challengeId),
+      };
+      const result = await challengesCollection.findOne(query);
+      res.send(result);
+    });
+    /* challenges app api end */
 
     /* users all api start */
     app.post("/users", async (req, res) => {
