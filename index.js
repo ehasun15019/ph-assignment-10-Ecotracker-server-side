@@ -28,27 +28,46 @@ async function run() {
     /* collections */
     const dataBase = client.db("ecoTracker");
     const usersCollection = dataBase.collection("users");
+    const challengesCollection = dataBase.collection("challenges")
+
+
+    /* challenges app api start */
+    // get method for showing all data for frontend
+    app.get("/challenges", async(req, res) => {
+      const cursor = challengesCollection.find();
+      const result = await cursor.toArray();
+      res.send(result)
+    })
+
+    // get method for showing 6 data 
+    app.get("/challenges-six", async(req, res) => {
+      const cursor = challengesCollection.find().sort({ category: -1 }).limit(6);
+      const result = await cursor.toArray();
+      res.send(result);
+    })
+    /* challenges app api end */
+
 
     /* users all api start */
-    app.post('/users', async(req, res) => {
+    app.post("/users", async (req, res) => {
       const newUser = req.body;
 
       const email = req.body.email;
       const query = {
-        email: email
-      }
+        email: email,
+      };
 
       const existingUser = await usersCollection.findOne(query);
 
-      if(existingUser) {
+      if (existingUser) {
         res.send({
-          message: 'user already exits'
-        })
+          message: "user already exits",
+        });
       } else {
         const result = await usersCollection.insertOne(newUser);
         res.send(result);
       }
-    })
+    });
     /* users all api emd */
 
     // Send a ping to confirm a successful connection
@@ -56,9 +75,7 @@ async function run() {
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
-  } 
-  finally {
-    
+  } finally {
   }
 }
 run().catch(console.dir);
