@@ -101,6 +101,48 @@ async function run() {
       }
     });
 
+    // post method add new challenges
+    app.post("/challenges", async (req, res) => {
+      try {
+        const {
+          title,
+          category,
+          description,
+          imageUrl,
+          duration,
+          target,
+          impactMetric,
+          startDate,
+          endDate,
+          createdBy,
+        } = req.body;
+
+        const newChallenge = {
+          title,
+          category,
+          description,
+          imageUrl,
+          duration: parseInt(duration),
+          target,
+          impactMetric,
+          startDate,
+          endDate,
+          createdBy,
+          createdAt: new Date(),
+        };
+
+        const result = await challengesCollection.insertOne(newChallenge);
+
+        res.status(201).send({
+          message: "Challenge created successfully!",
+          result: result.insertedId,
+        });
+      } catch (error) {
+        console.error("Error creating challenge:", error);
+        res.status(500).send({ message: "Internal server error" });
+      }
+    });
+
     /* challenges app api end */
 
     /* users all api start */
