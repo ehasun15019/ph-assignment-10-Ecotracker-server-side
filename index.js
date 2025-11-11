@@ -29,6 +29,7 @@ async function run() {
     const dataBase = client.db("ecoTracker");
     const usersCollection = dataBase.collection("users");
     const challengesCollection = dataBase.collection("challenges");
+    const userChallengesCollection = dataBase.collection("userChallenges");
 
     /* challenges app api start */
     // get method for showing all data for frontend
@@ -57,6 +58,49 @@ async function run() {
       const result = await challengesCollection.findOne(query);
       res.send(result);
     });
+
+    //post method for join user-Challenges
+    app.post("/challenges/join/:id", async (req, res) => {
+      try {
+        const challengeId = req.params.id;
+        const { userId } = req.body;
+
+        const existingJoin = await userChallengesCollection.findOne({
+          userId,
+          challengeId: new ObjectId(challengeId),
+        });
+
+        if (existingJoin) {
+          return res.status(400).send({
+            success: false,
+            message: "You already joined this challenge!",
+          });
+        }
+
+        const newJoin = {
+          userId,
+          challengeId: new ObjectId(challengeId),
+          status: "Not Started",
+          Progress: 0,
+          joinDate: new Date(),
+        };
+
+        await userChallengesCollection.insertOne(newJoin);
+
+        await challengesCollection.updateOne(
+          { _id: new ObjectId(challengeId) },
+          { $inc: { participants: 1 } }
+        );
+
+        res.send({ success: true, message: "Challenges joined successfully" });
+      } catch (error) {
+        console.error("Error joining challenge:", error);
+        res
+          .status(500)
+          .send({ success: false, message: "Server error occurred" });
+      }
+    });
+
     /* challenges app api end */
 
     /* users all api start */
