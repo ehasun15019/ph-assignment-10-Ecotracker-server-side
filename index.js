@@ -33,30 +33,6 @@ async function run() {
     const tipsCOllection = dataBase.collection("Tips");
     const eventCollection = dataBase.collection("events");
 
-    /* Events api start */
-    app.get("/upcoming-events", async (req, res) => {
-      const cursor = eventCollection.find().sort({ date: -1 }).limit(6);
-      const result = await cursor.toArray();
-      res.send(result);
-    });
-    /* Events api end */
-
-    /* Tips api start */
-    //get method for All Tips
-    app.get("/all-tips", async (req, res) => {
-      const cursor = tipsCOllection.find();
-      const result = await cursor.toArray();
-      res.send(result);
-    });
-
-    // get method for recent tips
-    app.get("/recent-tips", async (req, res) => {
-      const cursor = tipsCOllection.find().sort({ createdAt: -1 }).limit(6);
-      const result = await cursor.toArray();
-      res.send(result);
-    });
-    /* Tips api end */
-
     /* challenges app api start */
     // get method for showing all data for frontend
     app.get("/challenges", async (req, res) => {
@@ -103,9 +79,22 @@ async function run() {
           });
         }
 
+        // for challenge title
+        const challenge = await challengesCollection.findOne({
+          _id: new ObjectId(challengeId),
+        });
+
+        if (!challenge) {
+          return res.status(404).send({
+            success: false,
+            message: "Challenge not found!",
+          });
+        }
+
         const newJoin = {
           userId,
           challengeId: new ObjectId(challengeId),
+          challengeTitle: challenge.title,
           status: "Not Started",
           Progress: 0,
           joinDate: new Date(),
@@ -191,6 +180,69 @@ async function run() {
       }
     });
     /* users all api emd */
+
+    /* Events api start */
+    // get method for all-events
+    app.get("/all-events", async (req, res) => {
+      const cursor = eventCollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    //get method for upcoming-events
+    app.get("/upcoming-events", async (req, res) => {
+      const cursor = eventCollection.find().sort({ date: -1 }).limit(6);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+    /* Events api end */
+
+    /* Tips api start */
+    //get method for All Tips
+    app.get("/all-tips", async (req, res) => {
+      const cursor = tipsCOllection.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    // get method for recent tips
+    app.get("/recent-tips", async (req, res) => {
+      const cursor = tipsCOllection.find().sort({ createdAt: -1 }).limit(6);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+    /* Tips api end */
+
+    /* Get all joined challenges for a specific user start */
+    app.get("/user-challenges/:userId", async (req, res) => {
+      try {
+        const userId = req.params.userId;
+
+        const userChallenges = await userChallengesCollection
+          .find({ userId: userId })
+          .toArray();
+
+        if (userChallenges.length === 0) {
+          return res.status(404).send({
+            success: false,
+            message: "No challenges found for this user",
+          });
+        }
+
+        res.send({
+          success: true,
+          message: "User challenges fetched successfully",
+          data: userChallenges,
+        });
+      } catch (error) {
+        console.error("Error fetching user challenges:", error);
+        res.status(500).send({
+          success: false,
+          message: "Failed to fetch user challenges",
+        });
+      }
+    });
+    /* Get all joined challenges for a specific user end */
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
