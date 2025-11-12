@@ -33,8 +33,16 @@ async function run() {
     const tipsCOllection = dataBase.collection("Tips");
 
     /* Tips api start */
+    //get method for All Tips
+    app.get("/all-tips", async(req, res) => {
+      const cursor = tipsCOllection.find();
+      const result = await cursor.toArray();
+      res.send(result)
+    })
+
+    // get method for recent tips
     app.get("/recent-tips", async(req, res) => {
-      const cursor = tipsCOllection.find().sort({createdAt: -1}).limit(5)
+      const cursor = tipsCOllection.find().sort({createdAt: -1}).limit(6)
       const result = await cursor.toArray();
       res.send(result);
     })
