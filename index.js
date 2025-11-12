@@ -30,6 +30,15 @@ async function run() {
     const usersCollection = dataBase.collection("users");
     const challengesCollection = dataBase.collection("challenges");
     const userChallengesCollection = dataBase.collection("userChallenges");
+    const tipsCOllection = dataBase.collection("Tips");
+
+    /* Tips api start */
+    app.get("/recent-tips", async(req, res) => {
+      const cursor = tipsCOllection.find().sort({createdAt: -1}).limit(5)
+      const result = await cursor.toArray();
+      res.send(result);
+    })
+    /* Tips api end */
 
     /* challenges app api start */
     // get method for showing all data for frontend
@@ -142,7 +151,6 @@ async function run() {
         res.status(500).send({ message: "Internal server error" });
       }
     });
-
     /* challenges app api end */
 
     /* users all api start */
