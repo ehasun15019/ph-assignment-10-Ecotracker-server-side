@@ -116,6 +116,67 @@ async function run() {
       }
     });
 
+    // patch method for admin challenges
+    app.patch("/challenges/:id", async (req, res) => {
+      try {
+        const challengeId = req.body.id;
+        const updateData = req.body;
+
+        const result = await challengesCollection.updateOne(
+          { _id: new ObjectId(challengeId) },
+          { $set: updateData }
+        );
+
+        if (res.matchedCount === 0) {
+          return res.status(404).send({
+            success: false,
+            message: "Challenge not found!",
+          });
+        }
+
+        res.send({
+          success: true,
+          message: "Challenge updated successfully!",
+        });
+      } catch (err) {
+        console.log("Error updating challenge:", err);
+
+        res.status(500).send({
+          success: false,
+          message: "Internal server error",
+        });
+      }
+    });
+
+    //delete method for admin challenges
+    app.delete("/challenges/:id", async (req, res) => {
+      try {
+        const challengeId = req.params.id;
+
+        const result = await challengesCollection.deleteOne({
+          _id: new ObjectId(challengeId),
+        });
+
+        if (result.deletedCount === 0) {
+          return res.status(404).send({
+            success: false,
+            message: "Challenge not found or deleted already",
+          });
+        }
+
+        res.send({
+          success: true,
+          message: "Challenge deleted successfully",
+        });
+      } catch (err) {
+        console.error("Error deleting challenge:", err);
+        res.status(500).send({
+          success: false,
+          message: "Failed to delete challenge",
+        });
+      }
+    });
+
     // post method add new challenges
     app.post("/challenges", async (req, res) => {
       try {
@@ -144,6 +205,7 @@ async function run() {
           endDate,
           createdBy,
           createdAt: new Date(),
+          createdBy: req.body.createdBy,
         };
 
         const result = await challengesCollection.insertOne(newChallenge);
@@ -213,7 +275,8 @@ async function run() {
     });
     /* Tips api end */
 
-    /* Get all joined challenges for a specific user start */
+    /* Join challenges api start */
+    // get method for specify data
     app.get("/user-challenges/:userId", async (req, res) => {
       try {
         const userId = req.params.userId;
@@ -242,7 +305,61 @@ async function run() {
         });
       }
     });
-    /* Get all joined challenges for a specific user end */
+
+    // delete  method for specify data
+    app.delete("/user-challenges/:id", async (req, res) => {
+      try {
+        const challengeJoinId = req.params.id;
+
+        const result = await userChallengesCollection.deleteOne({
+          _id: new ObjectId(challengeJoinId),
+        });
+
+        if (result.deletedCount === 0) {
+          return res.status(404).send({
+            success: false,
+            message: "Challenge not found or already deleted",
+          });
+        }
+
+        res.send({
+          success: true,
+          message: "User challenge deleted successfully",
+        });
+      } catch (err) {
+        console.error("Error deleting user challenge:", err);
+        res.status(500).send({
+          success: false,
+          message: "Failed to delete user challenge",
+        });
+      }
+    });
+    /* Join challenges api end */
+
+    /*  admin created challenges api start  */
+    // get method for admin challenges
+    app.get("/created-challenges/:email", async (req, res) => {
+      try {
+        const email = req.params.email;
+
+        const challenges = await challengesCollection
+          .find({ createdBy: email })
+          .sort({ createdAt: 1 })
+          .toArray();
+
+        res.send({
+          success: true,
+          data: challenges,
+        });
+      } catch (err) {
+        console.error("Error fetching created challenges:", err);
+        res.status(500).send({
+          success: false,
+          message: "Failed to fetch created challenges",
+        });
+      }
+    });
+    /*  admin created challenges api end  */
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
